@@ -2,7 +2,7 @@
 
 
 base_path=$(pwd)
-base_path=$base_path"/exp_results"
+base_path=$base_path"/../exp_results"
 layer_num=(2 3 4)
 kernel_num=(512 1024)
 kernel_size=(3 5)

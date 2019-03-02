@@ -14,8 +14,8 @@ import json
 def parse_arguments():
     parser = argparse.ArgumentParser(description='neural net training script')
     base_path = os.path.dirname(os.path.abspath(__file__))
-    data_path = base_path + '/data'
-    exp_path = base_path + '/exp_results'
+    data_path = base_path + '/../data'
+    exp_path = base_path + '/../exp_results'
     parser.add_argument('-d', '--decode', action='store_true',
                         help='true in the decoding phase')
     parser.add_argument('-decode-net-file', default=exp_path + '/trained_models/iter16.h5',
