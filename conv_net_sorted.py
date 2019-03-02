@@ -301,3 +301,4 @@ for e in range(prm.epochs_num):
     write_log('    acc on te = ' + str(Metric.calc_acc(y_true_te, y_pred_te)))
     net.save(prm.out_dir + '/trained_models/iter' + str(e) + '.h5')
     write_log('Date-time: ' + str(datetime.datetime.now()))
+
