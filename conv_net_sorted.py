@@ -18,7 +18,7 @@ def parse_arguments():
     exp_path = base_path + '/../exp_results'
     parser.add_argument('-d', '--decode', action='store_true',
                         help='true in the decoding phase')
-    parser.add_argument('-decode-net-file', default=exp_path + '/trained_models/iter16.h5',
+    parser.add_argument('-decode-net-file', default=exp_path + '/1/trained_models/iter4.h5',
                         help='path for the network in the decode phase')
     parser.add_argument('-decode-out-dir', default=exp_path + '/decode',
                         help='path for the decoding results')
@@ -222,6 +222,32 @@ class Net:
                 y_true_all.append(this_y_true)
         return y_true_all, y_pred_all
 
+    def predict_and_save_one_hot(self, data_generator, set_path):
+        if data_generator.shuffle:
+            print('Error:')
+            print('data_generator cannot be shuffled when predict_and_save_one_hot is called.')
+            exit()
+        y_true_all = []
+        y_pred_all = []
+        for c in range(len(data_generator.ids)):
+            for i in range(len(data_generator.ids[c])):
+                y_pred = self._net.predict(data_generator.X[c][i:i+1, :, :])
+                y_pred = y_pred[0, :, :]
+                y_pred_comp = np.argmax(y_pred, -1)
+                y_true_comp = data_generator.y[c][i, :]
+                y_pred = y_pred[y_true_comp != prm.utt_pad_lab, :]
+                y_pred_comp = y_pred_comp[y_pred_comp != prm.utt_pad_lab]
+                y_true_comp = y_true_comp[y_true_comp != prm.utt_pad_lab]
+                y_pred_all.append(y_pred_comp)
+                y_true_all.append(y_true_comp)
+                prob_pred_dir = prm.decode_out_dir + '/prob_outputs/' + set_path + '/' + data_generator.ids[c][i] + '/'
+                if not os.path.exists(prob_pred_dir):
+                    os.makedirs(prob_pred_dir)
+                np.save(prob_pred_dir + 'y_pred.npy', y_pred)
+                np.save(prob_pred_dir + 'y_pred_comp.npy', y_pred_comp)
+                np.save(prob_pred_dir + 'y_true_comp.npy', y_true_comp)
+        return y_true_all, y_pred_all
+
     def save(self, path):
         full_path = os.path.abspath(path)
         dir_path = os.path.dirname(full_path)
@@ -277,13 +303,10 @@ if prm.decode:
     write_log('Loading the network for decode ...')
     net.load(prm.decode_net_file)
     write_log('Evaluating the network ...')
-    y_true_de, y_pred_de = net.predict(db.de)
+    y_true_de, y_pred_de = net.predict_and_save_one_hot(db.de, 'de')
     write_log('    acc on dev = ' + str(Metric.calc_acc(y_true_de, y_pred_de)))
-    y_true_te, y_pred_te = net.predict(db.te)
+    y_true_te, y_pred_te = net.predict_and_save_one_hot(db.te, 'te')
     write_log('    acc on te = ' + str(Metric.calc_acc(y_true_te, y_pred_te)))
-    write_log('Saving the predictions ...')
-    save_results(y_true_de, y_pred_de, db.de.ids, prm.decode_out_dir + '/de.txt')
-    save_results(y_true_te, y_pred_te, db.te.ids, prm.decode_out_dir + '/te.txt')
     exit()
 write_log('Constructing the network ...')
 net.construct()
@@ -301,4 +324,3 @@ for e in range(prm.epochs_num):
     write_log('    acc on te = ' + str(Metric.calc_acc(y_true_te, y_pred_te)))
     net.save(prm.out_dir + '/trained_models/iter' + str(e) + '.h5')
     write_log('Date-time: ' + str(datetime.datetime.now()))
-
