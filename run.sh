@@ -6,8 +6,8 @@ base_path=$base_path"/../exp_results"
 layer_num=(2 3 4)
 kernel_num=(512 1024)
 kernel_size=(3 5)
-last_kernel_num=(512 1024 2048)
-last_kernel_size=(1 2)
+last_kernel_num=(512 1024)
+last_kernel_size=(1)
 
 counter=0
 export CUDA_VISIBLE_DEVICE=0
