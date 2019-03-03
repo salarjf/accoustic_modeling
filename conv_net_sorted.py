@@ -226,8 +226,8 @@ class Net:
     @staticmethod
     def remove_utt_pad_lab(y):
         last_prob = y[:, :, -1] / prm.utt_pad_lab
-        y = y[:, :, :-1] + np.reshape(last_prob,[1, 1, prm.utt_pad_lab])
-        return y
+        last_prob = np.expand_dims(last_prob,axis=2)
+        return y[:,:,:-1] + last_prob 
 
     def predict_and_save_one_hot(self, data_generator, set_path):
         if data_generator.shuffle:
@@ -311,9 +311,6 @@ if prm.decode:
     write_log('Loading the network for decode ...')
     net.load(prm.decode_net_file)
     write_log('Evaluating the network ...')
-    from IPython import embed
-    embed()
-    exit()
     y_true_de, y_pred_de = net.predict_and_save_one_hot(db.de, 'de')
     write_log('    acc on dev = ' + str(Metric.calc_acc(y_true_de, y_pred_de)))
     y_true_te, y_pred_te = net.predict_and_save_one_hot(db.te, 'te')
