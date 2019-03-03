@@ -211,6 +211,7 @@ class Net:
         y_pred_all = []
         for (X, y_true) in data_generator:
             y_pred = self._net.predict(X)
+            y_pred = self.remove_utt_pad_lab(y_pred)
             y_pred = np.argmax(y_pred, -1)
             y_true = np.argmax(y_true, -1)
             for u in range(y_true.shape[0]):
@@ -222,6 +223,12 @@ class Net:
                 y_true_all.append(this_y_true)
         return y_true_all, y_pred_all
 
+    @staticmethod
+    def remove_utt_pad_lab(y):
+        last_prob = y[:, :, -1] / prm.utt_pad_lab
+        y = y[:, :, :-1] + np.reshape(last_prob,[1, 1, prm.utt_pad_lab])
+        return y
+
     def predict_and_save_one_hot(self, data_generator, set_path):
         if data_generator.shuffle:
             print('Error:')
@@ -232,11 +239,12 @@ class Net:
         for c in range(len(data_generator.ids)):
             for i in range(len(data_generator.ids[c])):
                 y_pred = self._net.predict(data_generator.X[c][i:i+1, :, :])
+                y_pred = self.remove_utt_pad_lab(y_pred)
                 y_pred = y_pred[0, :, :]
                 y_pred_comp = np.argmax(y_pred, -1)
                 y_true_comp = data_generator.y[c][i, :]
                 y_pred = y_pred[y_true_comp != prm.utt_pad_lab, :]
-                y_pred_comp = y_pred_comp[y_pred_comp != prm.utt_pad_lab]
+                y_pred_comp = y_pred_comp[y_true_comp != prm.utt_pad_lab]
                 y_true_comp = y_true_comp[y_true_comp != prm.utt_pad_lab]
                 y_pred_all.append(y_pred_comp)
                 y_true_all.append(y_true_comp)
@@ -303,6 +311,9 @@ if prm.decode:
     write_log('Loading the network for decode ...')
     net.load(prm.decode_net_file)
     write_log('Evaluating the network ...')
+    from IPython import embed
+    embed()
+    exit()
     y_true_de, y_pred_de = net.predict_and_save_one_hot(db.de, 'de')
     write_log('    acc on dev = ' + str(Metric.calc_acc(y_true_de, y_pred_de)))
     y_true_te, y_pred_te = net.predict_and_save_one_hot(db.te, 'te')
